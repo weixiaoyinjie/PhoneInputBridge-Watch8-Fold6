@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -17,9 +17,12 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
-
-      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Use preinstalled Android SDK
+        run: |
+          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
+          ls /usr/local/lib/android/sdk/platforms
+          ls /usr/local/lib/android/sdk/build-tools
 
       - uses: gradle/actions/setup-gradle@v4
         with:
@@ -32,15 +35,14 @@ jobs:
           key: phone-input-bridge-debug-signing-v1
 
       - name: Build both APKs
-        run: gradle :phone:assembleDebug :wear:assembleDebug --no-daemon --stacktrace
+        run: |
+          gradle :phone:assembleDebug :wear:assembleDebug --no-daemon --stacktrace
 
       - name: Collect APKs
         run: |
           mkdir -p output
           cp phone/build/outputs/apk/debug/phone-debug.apk output/PhoneInputBridge_PHONE.apk
           cp wear/build/outputs/apk/debug/wear-debug.apk output/PhoneInputBridge_WEAR.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs output/PhoneInputBridge_PHONE.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs output/PhoneInputBridge_WEAR.apk
 
       - uses: actions/upload-artifact@v4
         with:
