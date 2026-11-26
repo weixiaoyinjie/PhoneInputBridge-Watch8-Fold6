@@ -17,6 +17,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Extract source ZIP
+        run: |
+          mkdir -p project
+          unzip -o PhoneInputBridge-Watch8-Fold6-V1-OneUpload.zip -d project
+          ls -la project
+          test -f project/settings.gradle
+          test -f project/build.gradle
+          test -f project/phone/build.gradle
+          test -f project/wear/build.gradle
+
       - name: Use preinstalled Android SDK
         run: |
           echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
@@ -35,14 +45,15 @@ jobs:
           key: phone-input-bridge-debug-signing-v1
 
       - name: Build both APKs
+        working-directory: project
         run: |
           gradle :phone:assembleDebug :wear:assembleDebug --no-daemon --stacktrace
 
       - name: Collect APKs
         run: |
           mkdir -p output
-          cp phone/build/outputs/apk/debug/phone-debug.apk output/PhoneInputBridge_PHONE.apk
-          cp wear/build/outputs/apk/debug/wear-debug.apk output/PhoneInputBridge_WEAR.apk
+          cp project/phone/build/outputs/apk/debug/phone-debug.apk output/PhoneInputBridge_PHONE.apk
+          cp project/wear/build/outputs/apk/debug/wear-debug.apk output/PhoneInputBridge_WEAR.apk
 
       - uses: actions/upload-artifact@v4
         with:
